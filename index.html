@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://fonts.googleapis.com/css?family=Fira Code' rel='stylesheet'>
+    <title>Custom Bing API</title>
+    <style>
+        body {
+            font-family: 'Fira Code';
+            font-size: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #acd3e3;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #mainContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #toneBox {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 700px;
+        }
+        #toneForm {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            width: 80%;
+            margin: auto;
+        }
+        #toneForm label {
+            flex: 1;
+        }
+        #toneForm button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            background-color: #000000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #toneForm button:hover {
+            background-color: #45a049;
+        }
+        #chatForm {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #message {
+            width: 300px;
+            margin-bottom: 10px;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #000000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #response {
+            white-space: pre-line;
+            text-align: justify;
+            padding: 10px;
+            width: 100%;
+            word-wrap: break-word;
+            height: auto;
+            overflow: auto;
+            margin-top: 20px; 
+        }
+        #loadingSymbol {
+            display: none;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #loadingSymbol::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top: 2px solid #000000;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <h1>Custom Bing-AI API</h1>
+    <br><br><br>
+    <div id="mainContainer">
+        <form id="toneBox" action="/select_tone" method="GET" onsubmit="selectTone(); return false;">
+            <div id="toneForm">
+                <label>
+                    <input type="radio" name="tone" value="creative"> Creative
+                </label>
+                <label>
+                    <input type="radio" name="tone" value="balanced"> Balanced
+                </label>
+                <label>
+                    <input type="radio" name="tone" value="precise" checked> Precise
+                </label>
+                <button type="submit">SELECT TONE</button>
+            </div>
+        </form>
+        <form id="chatForm">
+            <input type="text" id="message" name="message" placeholder="Ask me anything..." style="border-radius: 15px; padding: 10px; width: 745px;" required>
+            <button type="button" onclick="sendMessage()">SEND</button>
+        </form>
+        <div id="response"></div>
+        <div id="responseContainer"></div>
+        <div id="loadingSymbol"></div>
+    </div>
+
+    <script>
+        function selectTone() {
+            var selectedTone = document.querySelector('input[name="tone"]:checked').value;
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                    } else {
+                        console.error('Error:', xhr.status, xhr.statusText);
+                    }
+                }
+            };
+            xhr.open("GET", "/select_tone?tone=" + encodeURIComponent(selectedTone), true);
+            xhr.send();
+        }
+        function sendMessage() {
+            var message = document.getElementById("message").value;
+            var xhr = new XMLHttpRequest();
+            var loadingSymbol = document.getElementById("loadingSymbol");
+            var responseContainer = document.getElementById("responseContainer");
+
+            loadingSymbol.style.display = "inline-block";
+            responseContainer.innerHTML = "";
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    loadingSymbol.style.display = "none";
+
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        displayResponse(response);
+                    } else {
+                        console.error('Error:', xhr.status, xhr.statusText);
+                        responseContainer.innerHTML = 'Error occurred while processing the request.';
+                    }
+                }
+            };
+
+            xhr.open("GET", "/chat?q=" + encodeURIComponent(message), true);
+            xhr.send();
+        }
+
+        function displayResponse(response) {
+            var responseContainer = document.getElementById("response");
+            responseContainer.innerHTML = "";
+
+            if (response.text) {
+                var textElement = document.createElement("div");
+                textElement.textContent = response.text;
+                responseContainer.appendChild(textElement);
+            }
+
+            if (response.codeBlock) {
+                var codeBlockElement = document.createElement("pre");
+                codeBlockElement.innerHTML = response.codeBlock;
+                responseContainer.appendChild(codeBlockElement);
+            }
+        }
+    </script>
+</body>
+</html>
